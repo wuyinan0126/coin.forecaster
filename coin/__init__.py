@@ -2,7 +2,6 @@
 P = '/home/wuyinan/Desktop/coin.forecaster/'
 
 C = {
-
     # ----------------------------- data_maker -----------------------------
     'csv_dir': P + 'data/datasets/csv/',
     'h5_dir': P + 'data/datasets/h5/',
@@ -18,5 +17,4 @@ C = {
     'epochs': 100,
     # ----------- GRU -----------
     'gru_units': 50,
-
 }
