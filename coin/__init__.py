@@ -1,5 +1,5 @@
-P = '/Users/wuyinan/Projects/se/projects/coin.forecaster/'
-# P = '/home/wuyinan/Desktop/coin.forecaster/'
+# P = '/Users/wuyinan/Projects/se/projects/coin.forecaster/'
+P = '/home/wuyinan/Desktop/coin.forecaster/'
 
 C = {
 
