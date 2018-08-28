@@ -66,5 +66,5 @@ class ModelMaker:
 
 
 if __name__ == '__main__':
-    maker = ModelMaker('USDT_BTC_20180801_300.h5')
+    maker = ModelMaker('USDT_BTC_20150101_300.h5')
     maker.make_gru()
