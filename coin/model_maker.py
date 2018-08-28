@@ -80,4 +80,4 @@ class ModelMaker:
 
 if __name__ == '__main__':
     maker = ModelMaker()
-    maker.train(h5_file_name='USDT_BTC_180101_5_256_16.h5', model_opts=C['gru_opts'])
+    maker.train(h5_file_name='USDT_BTC_150101_5_256_16.h5', model_opts=C['gru_opts'])
