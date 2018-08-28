@@ -7,8 +7,11 @@ import pandas as pd
 import numpy as np
 
 import time
+import os
 
 import urllib.request
+
+from coin import C
 
 
 class DataMaker:
@@ -19,18 +22,16 @@ class DataMaker:
         :param period: 数据采集周期，默认为每5分钟
         """
         start_time = time.mktime(datetime.strptime(start_date, "%Y%m%d").timetuple())
+        file_name = '{pair}_{start_date}_{period}'.format(pair=pair, start_date=start_date, period=period)
 
         self.url = 'https://poloniex.com/public?' \
                    'command=returnChartData' \
                    '&start={start_time}&end=9999999999' \
                    '&period={period}&currencyPair={pair}' \
             .format(start_time=start_time, period=period, pair=pair)
-        self.csv_file_path = 'data/csv/{pair}_{start_date}_{period}.csv'.format(
-            pair=pair, start_date=start_date, period=period
-        )
-        self.h5_file_path = 'data/h5/{pair}_{start_date}_{period}.h5'.format(
-            pair=pair, start_date=start_date, period=period
-        )
+
+        self.csv_file_path = os.path.join(C['csv_dir'], file_name + '.csv')
+        self.h5_file_path = os.path.join(C['h5_dir'], file_name + '.h5')
 
     def collect(self):
         """ 从poloniex中收集原始数据，存到csv """
@@ -45,7 +46,7 @@ class DataMaker:
         df.columns = new_columns
         df.to_csv(self.csv_file_path, index=None)
 
-    def transform(self, input_size=256, output_size=16):
+    def transform(self, input_size=C['input_size'], output_size=C['output_size']):
         """ 从csv中读取原始数据，经过变换存到h5，如用前input_size个价格预测之后的output_size个价格 """
         columns = ['Close']
 
@@ -63,9 +64,9 @@ class DataMaker:
         ori_data = np.array(ori_df)[:, None, :]
         time_stamps = np.array(time_stamps)[:, None, None]
 
-        inputs, outputs = self.__transform(input_size, output_size, data, False)
-        input_times, output_times = self.__transform(input_size, output_size, time_stamps, False)
-        ori_inputs, ori_outputs = self.__transform(input_size, output_size, ori_data, False)
+        inputs, outputs = self._transform(input_size, output_size, data, False)
+        input_times, output_times = self._transform(input_size, output_size, time_stamps, False)
+        ori_inputs, ori_outputs = self._transform(input_size, output_size, ori_data, False)
 
         with h5py.File(self.h5_file_path, 'w') as f:
             f.create_dataset("inputs", data=inputs)
@@ -76,7 +77,7 @@ class DataMaker:
             f.create_dataset('ori_inputs', data=ori_inputs)
             f.create_dataset('ori_outputs', data=ori_outputs)
 
-    def __transform(self, input_size, output_size, data, sliding_window=True):
+    def _transform(self, input_size, output_size, data, sliding_window=True):
         # Number of samples per row (sample + target)
         row_size = input_size + output_size
         # indexes
@@ -97,6 +98,6 @@ class DataMaker:
 
 
 if __name__ == '__main__':
-    maker = DataMaker(pair='USDT_BTC', start_date='20180827', period=300)
+    maker = DataMaker(pair='USDT_BTC', start_date='20180801', period=300)
     maker.collect()
-    maker.transform(input_size=256, output_size=16)
+    maker.transform()
