@@ -35,7 +35,9 @@ class DataMaker:
 
     def collect(self):
         """ 从poloniex中收集原始数据，存到csv """
-        proxy = urllib.request.ProxyHandler({'http': 'http://127.0.0.1:1087', 'https': 'http://127.0.0.1:1087'})
+        proxy = urllib.request.ProxyHandler(
+            # {'http': 'http://127.0.0.1:1087', 'https': 'http://127.0.0.1:1087'}
+        )
         opener = urllib.request.build_opener(proxy, urllib.request.HTTPHandler)
         urllib.request.install_opener(opener)
         data = urllib.request.urlopen(self.url).read()
@@ -98,6 +100,6 @@ class DataMaker:
 
 
 if __name__ == '__main__':
-    maker = DataMaker(pair='USDT_BTC', start_date='20180801', period=300)
+    maker = DataMaker(pair='USDT_BTC', start_date='20150101', period=300)
     maker.collect()
     maker.transform()
