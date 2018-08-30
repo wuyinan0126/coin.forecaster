@@ -28,7 +28,6 @@ C = {
         'output_size': 16,  # 输出数据周期 = period * output_size ~ 1.3h
         'units': 50,
         'batch_size': 8,
-        'epochs': 100,
     },
 
 }
