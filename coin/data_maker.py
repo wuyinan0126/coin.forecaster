@@ -1,10 +1,12 @@
 import argparse
 import logging
+import shutil
 import sqlite3
 from datetime import datetime
 
 import h5py
 from sklearn.preprocessing import MinMaxScaler
+from sklearn.externals import joblib
 import json
 import pandas as pd
 import numpy as np
@@ -25,6 +27,10 @@ class DataMaker:
         self.csv_file_path = os.path.join(C['csv_dir'], file_name + '.csv')
         self.h5_file_path = os.path.join(C['h5_dir'], file_name + '.h5')
         self.table_name = file_name
+        self.scaler_dir = os.path.join(C['scaler_dir'], file_name)
+        if os.path.exists(self.scaler_dir):
+            shutil.rmtree(self.scaler_dir)
+        os.mkdir(self.scaler_dir)
 
     @staticmethod
     def get_trade_data(trade_data_opts, start_time):
@@ -57,23 +63,25 @@ class DataMaker:
         logging.info('Raw trade data saved in {}'.format(self.csv_file_path))
 
     def transform(self):
-        """ 从csv中读取原始数据，经过变换存到h5，如用前input_size个价格预测之后的output_size个价格 """
+        """ 从csv中读取原始数据，经过变换存到h5，用前input_size个价格预测之后的output_size个价格 """
         features = self.trade_data_opts['features']
 
         df = pd.read_csv(self.csv_file_path)
         # 获取时间列
         time_stamps = df['date']
-        # 获取close价格
+        # 获取特征
         df = df.loc[:, features]
         ori_df = pd.read_csv(self.csv_file_path).loc[:, features]
 
-        scaler = MinMaxScaler()
-        # 归一化，最大为1
+        # 归一化
         for feature in features:
+            scaler = MinMaxScaler()
             # df[column]: [n*1]
             df[feature] = scaler.fit_transform(df[feature].values.reshape(-1, 1))
+            # 保存scaler
+            joblib.dump(scaler, os.path.join(self.scaler_dir, feature + '.scaler'))
 
-        # [n*feature_size] => [n*1*feature_size], n是数据数，feature_size是使用的列数如只用一列'Close'
+        # [n*feature_size] => [n*1*feature_size], n是数据数，feature_size是使用的列数如只用一列'close'
         data = np.array(df)[:, None, :]
         ori_data = np.array(ori_df)[:, None, :]
         # [n] => [n*1*1]
@@ -88,7 +96,7 @@ class DataMaker:
             f.create_dataset('outputs', data=outputs)
             f.create_dataset("input_times", data=input_times)
             f.create_dataset('output_times', data=output_times)
-            f.create_dataset("ori_data", data=np.array(ori_data))
+            f.create_dataset("ori_data", data=np.array(ori_df))
             f.create_dataset('ori_inputs', data=ori_inputs)
             f.create_dataset('ori_outputs', data=ori_outputs)
         logging.info('Transformed data saved in {}'.format(self.h5_file_path))
@@ -136,6 +144,6 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     maker = DataMaker(trade_data_opts=args.trade_data_opts, model_opts=args.model_opts)
-    # maker.collect()
-    # maker.transform()
-    # maker.make_db()
+    maker.collect()
+    maker.transform()
+    maker.make_db()

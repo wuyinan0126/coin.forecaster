@@ -8,11 +8,12 @@ C = {
     'csv_dir': P + 'data/datasets/csv/',
     'h5_dir': P + 'data/datasets/h5/',
     'db_path': P + 'data/db/coin.sqlite3',
+    'scaler_dir': P + 'data/scalers/',
     # ----------- trade_data_opts: btc -----------
     'btc_opts': {
         'pair': 'USDT_BTC',
         'api': 'https://poloniex.com/public?command=returnChartData&start={start_time}&end=9999999999&period={period}&currencyPair={pair}',
-        'start_date': '20180101',
+        'start_date': '20150101',
         'period': 5,  # 数据采样周期(min), 可以为5, 15, 30, 120, 240, 1440
         'features': ['close', 'volume']
     },
@@ -37,7 +38,7 @@ def get_feature_size(trade_data_opts=C['btc_opts']):
     return len(trade_data_opts['features'])
 
 
-def get_file_name(trade_data_opts=C['btc_opts'], model_opts=C['gru_opts']):
+def get_file_name(trade_data_opts, model_opts):
     file_name = '{pair}_{start_date}_p{period}_i{input_size}_o{output_size}_f{features_size}'.format(
         pair=trade_data_opts['pair'],
         start_date=trade_data_opts['start_date'][2:],

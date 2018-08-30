@@ -83,7 +83,7 @@ class ModelMaker:
         training_size = int(0.8 * data_size)
         # training_data: [(n*0.8)*input_size*feature_size]
         training_data = inputs[:training_size, :]
-        # training_labels: [(n*0.8)*input_size]
+        # training_labels: [(n*0.8)*output_size]
         training_labels = labels[:training_size, :, 0]
         validation_data = inputs[training_size:, :]
         validation_labels = labels[training_size:, :, 0]
@@ -93,5 +93,10 @@ class ModelMaker:
 
 
 if __name__ == '__main__':
-    maker = ModelMaker(model_opts='gru_opts', trade_data_opts='btc_opts')
+    parser = argparse.ArgumentParser('data_maker', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    parser.add_argument('--trade-data-opts', type=str, default='btc_opts')
+    parser.add_argument('--model-opts', type=str, default='gru_opts')
+    args = parser.parse_args()
+
+    maker = ModelMaker(model_opts=args.model_opts, trade_data_opts=args.trade_data_opts)
     # maker.train()
