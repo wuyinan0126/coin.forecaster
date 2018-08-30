@@ -99,4 +99,4 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     maker = ModelMaker(model_opts=args.model_opts, trade_data_opts=args.trade_data_opts)
-    # maker.train()
+    maker.train()
