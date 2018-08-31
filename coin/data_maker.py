@@ -38,6 +38,7 @@ class DataMaker:
             logging.info('Getting trade data from {}'.format(api))
             proxy = urllib.request.ProxyHandler(
                 # {'http': 'http://127.0.0.1:1087', 'https': 'http://127.0.0.1:1087'}
+                {'http': 'http://10.2.2.153:8123', 'https': 'http://10.2.2.153:8123'}
             )
             opener = urllib.request.build_opener(proxy, urllib.request.HTTPHandler)
             urllib.request.install_opener(opener)
