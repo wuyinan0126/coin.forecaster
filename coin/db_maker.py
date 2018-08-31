@@ -116,7 +116,6 @@ class DbMaker:
         df['time'] = df['time'].apply(lambda x: datetime.strptime(x, '%Y-%m-%d %H:%M:%S').strftime('%Y-%m-%d %H:%M'))
         df.columns = ['date', 'close', 'close_forecast']
         df.to_csv(path_or_buf=os.path.join(C['ui_data'], table_name + '.csv'), index=False)
-        print(df)
 
 
 if __name__ == '__main__':

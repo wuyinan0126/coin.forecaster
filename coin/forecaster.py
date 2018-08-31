@@ -106,7 +106,7 @@ class Forecaster:
 if __name__ == '__main__':
     forecaster = Forecaster(
         model_opts='gru_opts',
-        trade_data_opts='btc_opts',
-        weights_file_name='usdt_btc_150101_p5_i256_o16_f2_gru_52_0.00014.hdf5'
+        trade_data_opts='poloniex_btc_opts',
+        weights_file_name='poloniex_usdt_btc_150101_p5_i256_o16_f2_gru_52_0.00014.hdf5'
     )
     forecaster.forecast()

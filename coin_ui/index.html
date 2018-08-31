@@ -170,7 +170,7 @@
 
     //end slider part-----------------------------------------------------------------------------------
 
-    d3.csv("data/usdt_btc_150101_p5_i256_o16_f2.csv", function (error, data) {
+    d3.csv("data/poloniex_usdt_btc_150101_p5_i256_o16_f2.csv", function (error, data) {
         color.domain(d3.keys(data[0]).filter(function (key) { // Set the domain of the color ordinal scale to be all the csv headers except "date", matching a color to an issue
             return key !== "date";
         }));
