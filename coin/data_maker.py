@@ -1,4 +1,5 @@
 import argparse
+import ast
 import logging
 import shutil
 from datetime import datetime
@@ -11,7 +12,7 @@ import pandas as pd
 import numpy as np
 
 import os
-
+import time
 import urllib.request
 
 from coin import C, get_file_name
@@ -31,6 +32,8 @@ class DataMaker:
 
     @staticmethod
     def get_trade_data(trade_data_opts, start_time):
+        """ 从trade_data_opts['name']平台获取数据，从start_time开始到现在，unix时间戳(秒) """
+
         def get_data(api):
             logging.info('Getting trade data from {}'.format(api))
             proxy = urllib.request.ProxyHandler(
@@ -42,18 +45,45 @@ class DataMaker:
             return data
 
         def get_poloniex_data():
-            api = trade_data_opts['api'].format(
+            api = 'https://poloniex.com/public?command=returnChartData&start={start_time}&end=9999999999&period={period}&currencyPair={pair}'.format(
                 start_time=start_time,
                 period=trade_data_opts['period'] * 60,
                 pair=trade_data_opts['pair']
             )
             data = get_data(api)
             poloniex_df = pd.DataFrame(json.loads(data))
-            poloniex_df = poloniex_df.loc[:, trade_data_opts['columns']]
+            poloniex_df = poloniex_df.loc[:, ['close', 'date', 'high', 'low', 'open', 'volume']]
             return poloniex_df
 
         def get_bitfinex_data():
-            pass
+            period_str = {1: '1m', 5: '5m', 15: '15m', 30: '30m', 60: '1h', 180: '3h',
+                          360: '6h', 720: '12h', 1440: '1D', 10080: '7D', 20160: '14D', -1: '1M'}
+            period = trade_data_opts['period']
+            limit = trade_data_opts['limit']
+
+            bitfinex_df = pd.DataFrame([], columns=['MTS', 'OPEN', 'CLOSE', 'HIGH', 'LOW', 'VOLUME'])
+            s = int(start_time)
+            while s <= int(time.time()):
+                e = s + limit * period * 60
+                api = 'https://api.bitfinex.com/v2/candles/trade:{period}:{pair}/hist?limit={limit}&start={start_time}&end={end_time}&sort=1'.format(
+                    start_time=s * 1000,
+                    period=period_str[period],
+                    pair=trade_data_opts['pair'],
+                    end_time=e * 1000,
+                    limit=limit,
+                )
+                # data = [[MTS, OPEN, CLOSE, HIGH, LOW, VOLUME]*100]
+                data = get_data(api).decode('utf-8')
+                data = ast.literal_eval(data)
+                one_df = pd.DataFrame(data, columns=['MTS', 'OPEN', 'CLOSE', 'HIGH', 'LOW', 'VOLUME'])
+                one_df = one_df[['CLOSE', 'MTS', 'HIGH', 'LOW', 'OPEN', 'VOLUME']]
+                one_df['MTS'] = one_df['MTS'].apply(lambda x: x / 1000)
+                bitfinex_df = bitfinex_df.append(one_df, sort=False)
+                s = e
+                # 防止被ban
+                time.sleep(3)
+
+            return bitfinex_df
 
         # noinspection PyCallingNonCallable
         df = locals().get('get_' + trade_data_opts['name'] + '_data')()
@@ -148,11 +178,11 @@ class DataMaker:
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser('data_maker', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    parser.add_argument('--trade-data-opts', type=str, default='poloniex_btc_opts')
+    parser.add_argument('--trade-data-opts', type=str, default='bitfinex_btc_opts')
     parser.add_argument('--model-opts', type=str, default='gru_opts')
     args = parser.parse_args()
 
     maker = DataMaker(trade_data_opts=args.trade_data_opts, model_opts=args.model_opts)
-    # maker.collect()
-    # maker.transform()
+    maker.collect()
+    maker.transform()
     maker.make_table(load_history_trade_data=False)

@@ -31,7 +31,7 @@ class DbMaker:
         conn.execute(sql)
         # trigger：更新row时自动更新modified_time
         sql = """
-            CREATE TRIGGER UpdateModifiedTime
+            CREATE TRIGGER trigger_{table_name}
                 UPDATE OF 
                     close, 
                     close_forecaset
