@@ -64,8 +64,9 @@ class DataMaker:
 
             bitfinex_df = pd.DataFrame([], columns=['MTS', 'OPEN', 'CLOSE', 'HIGH', 'LOW', 'VOLUME'])
             s = int(start_time)
-            while s <= int(time.time()):
-                e = s + limit * period * 60
+            now = int(time.time())
+            while s <= now:
+                e = now if now - s <= limit * period * 60 else s + limit * period * 60
                 api = 'https://api.bitfinex.com/v2/candles/trade:{period}:{pair}/hist?limit={limit}&start={start_time}&end={end_time}&sort=1'.format(
                     start_time=s * 1000,
                     period=period_str[period],
@@ -81,6 +82,7 @@ class DataMaker:
                 one_df['MTS'] = one_df['MTS'].apply(lambda x: x / 1000)
                 bitfinex_df = bitfinex_df.append(one_df, sort=False)
                 s = e
+                now = int(time.time())
                 # 防止被ban
                 time.sleep(3)
 
