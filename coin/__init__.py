@@ -1,7 +1,7 @@
 import logging
 
-P = '/home/wuyinan/Desktop/coin.forecaster/'
-# P = '/Users/wuyinan/Projects/se/projects/coin.forecaster/'
+# P = '/home/wuyinan/Desktop/coin.forecaster/'
+P = '/Users/wuyinan/Projects/se/projects/coin.forecaster/'
 
 C = {
     # ----------------------------- data_maker -----------------------------
@@ -10,11 +10,23 @@ C = {
     'db_path': P + 'data/db/coin.sqlite3',
     'scaler_dir': P + 'data/scalers/',
     # ----------- trade_data_opts: btc -----------
-    'btc_opts': {
+
+    'poloniex_btc_opts': {
+        'name': 'poloniex',
         'pair': 'USDT_BTC',
         'api': 'https://poloniex.com/public?command=returnChartData&start={start_time}&end=9999999999&period={period}&currencyPair={pair}',
         'start_date': '20150101',
         'period': 5,  # 数据采样周期(min), 可以为5, 15, 30, 120, 240, 1440
+        'columns': ['close', 'date', 'high', 'low', 'open', 'volume'],
+        'features': ['close', 'volume']
+    },
+    'bitfinex_btc_opts': {
+        'name': 'bitfinex',
+        'pair': 'tBTCUSD',
+        'api': 'https://api.bitfinex.com/v2/candles/trade:5m:tBTCUSD/hist?start=1535658300000&end=1535692309000&sort=1',
+        'start_date': '20150101',
+        'period': 5,
+        'columns': ['CLOSE', 'MTS', 'HIGH', 'LOW', 'OPEN', 'VOLUME'],
         'features': ['close', 'volume']
     },
     # ----------------------------- model_maker -----------------------------
@@ -29,22 +41,24 @@ C = {
         'units': 50,
         'batch_size': 8,
     },
-
+    # ----------------------------- forecaster -----------------------------
+    'ui_data': P + 'coin_ui/data/'
 }
 
 
-def get_feature_size(trade_data_opts=C['btc_opts']):
+def get_feature_size(trade_data_opts):
     return len(trade_data_opts['features'])
 
 
 def get_file_name(trade_data_opts, model_opts):
-    file_name = '{pair}_{start_date}_p{period}_i{input_size}_o{output_size}_f{features_size}'.format(
+    file_name = '{name}_{pair}_{start_date}_p{period}_i{input_size}_o{output_size}_f{features_size}'.format(
+        name=trade_data_opts['name'],
         pair=trade_data_opts['pair'],
         start_date=trade_data_opts['start_date'][2:],
         period=trade_data_opts['period'],
         input_size=model_opts['input_size'],
         output_size=model_opts['output_size'],
-        features_size=get_feature_size(),
+        features_size=get_feature_size(trade_data_opts),
     ).lower()
     return file_name
 

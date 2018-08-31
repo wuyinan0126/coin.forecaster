@@ -1,7 +1,6 @@
 import argparse
 import logging
 import shutil
-import sqlite3
 from datetime import datetime
 
 import h5py
@@ -16,10 +15,11 @@ import os
 import urllib.request
 
 from coin import C, get_file_name
+from db_maker import DbMaker
 
 
 class DataMaker:
-    def __init__(self, trade_data_opts='btc_opts', model_opts='gru_opts'):
+    def __init__(self, trade_data_opts='poloniex_btc_opts', model_opts='gru_opts'):
         self.trade_data_opts = C[trade_data_opts]
         self.model_opts = C[model_opts]
 
@@ -28,26 +28,36 @@ class DataMaker:
         self.h5_file_path = os.path.join(C['h5_dir'], file_name + '.h5')
         self.table_name = file_name
         self.scaler_dir = os.path.join(C['scaler_dir'], file_name)
-        if os.path.exists(self.scaler_dir):
-            shutil.rmtree(self.scaler_dir)
-        os.mkdir(self.scaler_dir)
 
     @staticmethod
     def get_trade_data(trade_data_opts, start_time):
-        api = trade_data_opts['api'].format(
-            start_time=start_time,
-            period=trade_data_opts['period'] * 60,
-            pair=trade_data_opts['pair']
-        )
-        logging.info('Getting trade data from {}'.format(api))
-        proxy = urllib.request.ProxyHandler(
-            # {'http': 'http://127.0.0.1:1087', 'https': 'http://127.0.0.1:1087'}
-        )
-        opener = urllib.request.build_opener(proxy, urllib.request.HTTPHandler)
-        urllib.request.install_opener(opener)
+        def get_data(api):
+            logging.info('Getting trade data from {}'.format(api))
+            proxy = urllib.request.ProxyHandler(
+                {'http': 'http://127.0.0.1:1087', 'https': 'http://127.0.0.1:1087'}
+            )
+            opener = urllib.request.build_opener(proxy, urllib.request.HTTPHandler)
+            urllib.request.install_opener(opener)
+            data = urllib.request.urlopen(api).read()
+            return data
 
-        data = urllib.request.urlopen(api).read()
-        df = pd.DataFrame(json.loads(data))
+        def get_poloniex_data():
+            api = trade_data_opts['api'].format(
+                start_time=start_time,
+                period=trade_data_opts['period'] * 60,
+                pair=trade_data_opts['pair']
+            )
+            data = get_data(api)
+            poloniex_df = pd.DataFrame(json.loads(data))
+            poloniex_df = poloniex_df.loc[:, trade_data_opts['columns']]
+            return poloniex_df
+
+        def get_bitfinex_data():
+            pass
+
+        # noinspection PyCallingNonCallable
+        df = locals().get('get_' + trade_data_opts['name'] + '_data')()
+        df.columns = ['close', 'date', 'high', 'low', 'open', 'volume']
         return df
 
     def collect(self):
@@ -57,8 +67,6 @@ class DataMaker:
         start_time = datetime.strptime(self.trade_data_opts['start_date'], "%Y%m%d").strftime('%s')
         df = self.get_trade_data(self.trade_data_opts, start_time)
 
-        columns = ['close', 'date', 'high', 'low', 'open', 'volume']
-        df = df.loc[:, columns]
         df.to_csv(self.csv_file_path, index=None)
         logging.info('Raw trade data saved in {}'.format(self.csv_file_path))
 
@@ -74,6 +82,9 @@ class DataMaker:
         ori_df = pd.read_csv(self.csv_file_path).loc[:, features]
 
         # 归一化
+        if os.path.exists(self.scaler_dir):
+            shutil.rmtree(self.scaler_dir)
+        os.mkdir(self.scaler_dir)
         for feature in features:
             scaler = MinMaxScaler()
             # df[column]: [n*1]
@@ -123,27 +134,25 @@ class DataMaker:
         # 输入和输出矩阵: [n*input_size*feature_size], [n*output_size*1]
         return matrix[:, :i], matrix[:, i:, :1]
 
-    def make_db(self):
-        def init_data():
+    def make_table(self, load_history_trade_data=False):
+        DbMaker.create_table(table_name=self.table_name)
+        if load_history_trade_data:
             df = pd.read_csv(self.csv_file_path, index_col=None)
             df = df[['date', 'close']]
             # unix timestamp转datetime
             df['date'] = df['date'].apply(lambda x: datetime.fromtimestamp(x))
-            df['forecast'] = ''
-            df.columns = ['time', 'truth', 'forecast']
-            df.to_sql(name=self.table_name, con=conn, if_exists='replace', chunksize=1000, index=False)
-
-        conn = sqlite3.connect(C['db_path'])
-        init_data()
+            df['close_forecast'] = ''
+            df.columns = ['time', 'close', 'close_forecast']
+            DbMaker.update_table(table_name=self.table_name, close_df=df, close_forecast_df=None)
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser('data_maker', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    parser.add_argument('--trade-data-opts', type=str, default='btc_opts')
+    parser.add_argument('--trade-data-opts', type=str, default='poloniex_btc_opts')
     parser.add_argument('--model-opts', type=str, default='gru_opts')
     args = parser.parse_args()
 
     maker = DataMaker(trade_data_opts=args.trade_data_opts, model_opts=args.model_opts)
-    maker.collect()
-    maker.transform()
-    maker.make_db()
+    # maker.collect()
+    # maker.transform()
+    maker.make_table(load_history_trade_data=False)

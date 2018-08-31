@@ -94,7 +94,7 @@ class ModelMaker:
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser('data_maker', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    parser.add_argument('--trade-data-opts', type=str, default='btc_opts')
+    parser.add_argument('--trade-data-opts', type=str, default='poloniex_btc_opts')
     parser.add_argument('--model-opts', type=str, default='gru_opts')
     args = parser.parse_args()
 
