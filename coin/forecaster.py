@@ -29,16 +29,20 @@ class Forecaster:
 
     def forecast(self):
         while True:
-            # 获取input_size个实时数据
-            real_time_df = self.__get_realtime_data()
-            # 生成output_size个预测close价格
-            predicts = self.__forecast_realtime(real_time_df)
-            # input_size个实时数据和output_size个预测close价格入库
-            self.__update_table(real_time_df, predicts)
-            # 从数据库生成展示用的tsv文件
-            self.__dump_table()
+            try:
+                # 获取input_size个实时数据
+                real_time_df = self.__get_realtime_data()
+                # 生成output_size个预测close价格
+                predicts = self.__forecast_realtime(real_time_df)
+                # input_size个实时数据和output_size个预测close价格入库
+                self.__update_table(real_time_df, predicts)
+                # 从数据库生成展示用的tsv文件
+                self.__dump_table()
+            except:
+                logging.error('Get realtime trade data failed!')
+                raise
             # 休眠period时间
-            sleep(self.trade_data_opts['period'] * 60)
+            sleep(60)
 
     def __forecast_realtime(self, realtime_df):
         """
@@ -75,12 +79,12 @@ class Forecaster:
         return df
 
     def __update_table(self, realtime_df, predicts):
-        df = realtime_df.loc[:, ['date', 'close']]
-        df['date'] = df['date'].apply(lambda x: datetime.fromtimestamp(x))
-        df['close_forecast'] = ''
-        df.columns = ['time', 'close', 'close_forecast']
+        realtime_df = realtime_df.loc[:, ['date', 'close']]
+        realtime_df['date'] = realtime_df['date'].apply(lambda x: datetime.fromtimestamp(x))
+        realtime_df['close_forecast'] = ''
+        realtime_df.columns = ['time', 'close', 'close_forecast']
 
-        latest_time = df.tail(1)['time'].values[0]
+        latest_time = realtime_df.tail(1)['time'].values[0]
         logging.info(
             'Latest time of trade is {}'.format(pd.to_datetime(str(latest_time)).strftime('%Y-%m-%d %H:%M:%S')))
         period = self.trade_data_opts['period']
@@ -94,7 +98,7 @@ class Forecaster:
 
         # 将real_time_df最后一个时间之后output_size个周期的预测数据append到df中
         # df = df.append(pd.DataFrame(predicts_data, columns=['time', 'close', 'close_forecast']), ignore_index=True)
-        DbMaker.update_table(self.table_name, df, close_forecast_df)
+        DbMaker.update_table(self.table_name, realtime_df, close_forecast_df)
 
     def __dump_table(self):
         DbMaker.dump_table(self.table_name)
@@ -104,9 +108,14 @@ class Forecaster:
 
 
 if __name__ == '__main__':
+    # forecaster = Forecaster(
+    #     model_opts='gru_opts',
+    #     trade_data_opts='poloniex_btc_opts',
+    #     weights_file_name='poloniex_usdt_btc_150101_p5_i256_o16_f2_gru_52_0.00014.hdf5'
+    # )
     forecaster = Forecaster(
         model_opts='gru_opts',
-        trade_data_opts='poloniex_btc_opts',
-        weights_file_name='poloniex_usdt_btc_150101_p5_i256_o16_f2_gru_52_0.00014.hdf5'
+        trade_data_opts='bitfinex_btc_opts',
+        weights_file_name='bitfinex_tbtcusd_150101_p5_i256_o16_f2_gru_61_0.00040.hdf5'
     )
     forecaster.forecast()

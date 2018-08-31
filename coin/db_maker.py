@@ -68,6 +68,10 @@ class DbMaker:
                     WHERE temp.time = {table_name}.time 
                     AND close IS NOT NULL 
                 )
+                WHERE time >= (
+                    SELECT min(time) 
+                    FROM temp
+                )
             """.format(table_name=table_name)
             conn.execute(sql)
 
@@ -91,7 +95,6 @@ class DbMaker:
     @staticmethod
     def dump_table(table_name, limit=-1):
         conn = DbMaker.__get_conn()
-        cursor = conn.cursor()
 
         sql = """
             SELECT 

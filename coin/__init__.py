@@ -4,6 +4,9 @@ P = '/home/wuyinan/Desktop/coin.forecaster/'
 # P = '/Users/wuyinan/Projects/se/projects/coin.forecaster/'
 
 C = {
+    # ----------------------------- args -----------------------------
+    'model_opts': 'gru_opts',
+    'trade_data_opts': 'bitfinex_btc_opts',
     # ----------------------------- data_maker -----------------------------
     'csv_dir': P + 'data/datasets/csv/',
     'h5_dir': P + 'data/datasets/h5/',

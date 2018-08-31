@@ -62,7 +62,7 @@ class DataMaker:
             period = trade_data_opts['period']
             limit = trade_data_opts['limit']
 
-            bitfinex_df = pd.DataFrame([], columns=['MTS', 'OPEN', 'CLOSE', 'HIGH', 'LOW', 'VOLUME'])
+            bitfinex_df = pd.DataFrame([], columns=['CLOSE', 'MTS', 'HIGH', 'LOW', 'OPEN', 'VOLUME'])
             s = int(start_time)
             now = int(time.time())
             while s <= now and now - s > period * 60:
@@ -180,12 +180,13 @@ class DataMaker:
 
 
 if __name__ == '__main__':
+    # python data_maker.py --trade-data-opts poloniex_btc_opts --model-opts gru_opts
     parser = argparse.ArgumentParser('data_maker', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    parser.add_argument('--trade-data-opts', type=str, default='poloniex_btc_opts')
-    parser.add_argument('--model-opts', type=str, default='gru_opts')
+    parser.add_argument('--trade-data-opts', type=str, default=C['trade_data_opts'])
+    parser.add_argument('--model-opts', type=str, default=C['model_opts'])
     args = parser.parse_args()
 
     maker = DataMaker(trade_data_opts=args.trade_data_opts, model_opts=args.model_opts)
-    # maker.collect()
+    maker.collect()
     maker.transform()
     # maker.make_table(load_history_trade_data=False)
