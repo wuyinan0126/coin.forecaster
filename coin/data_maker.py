@@ -187,5 +187,5 @@ if __name__ == '__main__':
 
     maker = DataMaker(trade_data_opts=args.trade_data_opts, model_opts=args.model_opts)
     # maker.collect()
-    # maker.transform()
-    maker.make_table(load_history_trade_data=False)
+    maker.transform()
+    # maker.make_table(load_history_trade_data=False)
