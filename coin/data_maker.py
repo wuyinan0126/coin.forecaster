@@ -39,8 +39,8 @@ class DataMaker:
         def get_data(api):
             logging.info('Getting trade data from {}'.format(api))
             proxy = urllib.request.ProxyHandler(
-                # {'http': 'http://127.0.0.1:1087', 'https': 'http://127.0.0.1:1087'}
-                {'http': 'http://10.2.2.153:8123', 'https': 'http://10.2.2.153:8123'}
+                {'http': 'http://127.0.0.1:1087', 'https': 'http://127.0.0.1:1087'}
+                # {'http': 'http://10.2.2.153:8123', 'https': 'http://10.2.2.153:8123'}
             )
             opener = urllib.request.build_opener(proxy, urllib.request.HTTPHandler)
             urllib.request.install_opener(opener)
@@ -201,6 +201,6 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     maker = DataMaker(trade_data_opts=args.trade_data_opts, model_opts=args.model_opts)
-    maker.collect()
-    maker.transform()
-    # maker.make_table(load_history_trade_data=False)
+    # maker.collect()
+    # maker.transform()
+    maker.make_table(load_history_trade_data=False)

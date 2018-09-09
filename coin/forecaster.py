@@ -73,8 +73,11 @@ class Forecaster:
         input_size = self.model_opts['input_size']
         start_time = (datetime.now() - timedelta(minutes=(input_size + 16) * period)).strftime('%s')
         df = DataMaker.get_trade_data(self.trade_data_opts, start_time)
+        date_df = df['date']
+        df = DataMaker.get_indicators(df)
+        df = df.assign(date=date_df.values)
 
-        df = df.loc[len(df) - input_size:, :]
+        df = df.iloc[len(df) - input_size:]
         assert len(df) == input_size
         return df
 
@@ -111,6 +114,6 @@ if __name__ == '__main__':
     forecaster = Forecaster(
         model_opts=C['model_opts'],
         trade_data_opts=C['trade_data_opts'],
-        weights_file_name='bitfinex_tbtcusd_150101_p5_i256_o16_f2_gru_54_0.00052.hdf5'
+        weights_file_name='bitfinex_tbtcusd_150101_p60_i32_o4_f37_gru_45_0.00018.hdf5'
     )
     forecaster.forecast()
