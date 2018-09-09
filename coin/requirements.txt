@@ -3,3 +3,4 @@ pandas
 sklearn
 tensorflow-gpu==1.4.1
 h5py
+stockstats

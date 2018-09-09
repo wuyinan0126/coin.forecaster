@@ -9,7 +9,7 @@ import os
 import tensorflow as tf
 from keras.backend.tensorflow_backend import set_session
 
-from coin import C, get_feature_size, get_file_name
+from coin import C, get_file_name
 
 
 class ModelMaker:
@@ -39,7 +39,7 @@ class ModelMaker:
         def make_gru():
             model = Sequential()
             model.add(GRU(units=model_opts['units'],
-                          input_shape=(model_opts['input_size'], get_feature_size(trade_data_opts)),
+                          input_shape=(model_opts['input_size'], len(C['features'])),
                           return_sequences=False))
             model.add(Activation('tanh'))
             model.add(Dropout(0.2))
@@ -78,7 +78,7 @@ class ModelMaker:
         step_size = inputs.shape[1]
         assert step_size == self.model_opts['input_size']
         features_size = inputs.shape[2]
-        assert features_size == get_feature_size(self.trade_data_opts)
+        assert features_size == len(C['features'])
 
         training_size = int(0.8 * data_size)
         # training_data: [(n*0.8)*input_size*feature_size]

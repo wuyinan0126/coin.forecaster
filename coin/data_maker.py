@@ -15,6 +15,8 @@ import os
 import time
 import urllib.request
 
+from stockstats import StockDataFrame
+
 from coin import C, get_file_name
 from db_maker import DbMaker
 
@@ -93,19 +95,31 @@ class DataMaker:
         df.columns = ['close', 'date', 'high', 'low', 'open', 'volume']
         return df
 
+    @staticmethod
+    def get_indicators(df):
+        stock = StockDataFrame.retype(df)
+        features = C['features']
+        for feature in features:
+            df[feature] = stock.get(feature)
+        return df
+
     def collect(self):
         """ 从poloniex中收集原始数据，存到csv """
         logging.info('Raw trade data collecting...')
 
         start_time = datetime.strptime(self.trade_data_opts['start_date'], "%Y%m%d").strftime('%s')
         df = self.get_trade_data(self.trade_data_opts, start_time)
+        date_df = df['date']
+        # 计算各种指标
+        df = self.get_indicators(df)
+        df = df.assign(date=date_df.values)
 
-        df.to_csv(self.csv_file_path, index=None)
+        df.iloc[16:].to_csv(self.csv_file_path, index=None)
         logging.info('Raw trade data saved in {}'.format(self.csv_file_path))
 
     def transform(self):
         """ 从csv中读取原始数据，经过变换存到h5，用前input_size个价格预测之后的output_size个价格 """
-        features = self.trade_data_opts['features']
+        features = C['features']
 
         df = pd.read_csv(self.csv_file_path)
         # 获取时间列

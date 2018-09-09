@@ -40,7 +40,7 @@ class Forecaster:
                 self.__dump_table()
             except:
                 logging.error('Get realtime trade data failed!')
-                raise
+                # raise
             # 休眠period时间
             sleep(60)
 
@@ -50,7 +50,7 @@ class Forecaster:
         :return: inverted_predicts:     output_size
         """
         # features_df: [input_size*feature_size]
-        features_df = realtime_df.loc[:, self.trade_data_opts['features']]
+        features_df = realtime_df.loc[:, C['features']]
         # 归一化，最大为1
         for feature in features_df:
             scaler = joblib.load(os.path.join(self.scaler_dir, feature + '.scaler'))
@@ -108,14 +108,9 @@ class Forecaster:
 
 
 if __name__ == '__main__':
-    # forecaster = Forecaster(
-    #     model_opts='gru_opts',
-    #     trade_data_opts='poloniex_btc_opts',
-    #     weights_file_name='poloniex_usdt_btc_150101_p5_i256_o16_f2_gru_52_0.00014.hdf5'
-    # )
     forecaster = Forecaster(
-        model_opts='gru_opts',
-        trade_data_opts='bitfinex_btc_opts',
-        weights_file_name='bitfinex_tbtcusd_150101_p5_i256_o16_f2_gru_61_0.00040.hdf5'
+        model_opts=C['model_opts'],
+        trade_data_opts=C['trade_data_opts'],
+        weights_file_name='bitfinex_tbtcusd_150101_p5_i256_o16_f2_gru_54_0.00052.hdf5'
     )
     forecaster.forecast()

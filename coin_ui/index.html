@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <head>
     <meta charset="utf-8">
+    <!--每60s刷新一次页面-->
+    <meta http-equiv="Refresh" content="60">
     <!--<title>Issues Ratings</title>-->
     <style>
 
@@ -156,7 +158,7 @@
     //for slider part-----------------------------------------------------------------------------------
 
     var context = svg.append("g") // Brushing context box container
-        // 滑动窗口位置
+    // 滑动窗口位置
         .attr("transform", "translate(" + 0 + "," + 705 + ")")
         .attr("class", "context");
 
@@ -170,7 +172,11 @@
 
     //end slider part-----------------------------------------------------------------------------------
 
-    d3.csv("data/poloniex_usdt_btc_150101_p5_i256_o16_f2.csv", function (error, data) {
+    // 查看是否包含参数
+    var n = self.location.href.indexOf("?");
+    var data_file_name = self.location.href.substr(n + 1);
+
+    d3.csv("data/" + data_file_name + ".csv", function (error, data) {
         color.domain(d3.keys(data[0]).filter(function (key) { // Set the domain of the color ordinal scale to be all the csv headers except "date", matching a color to an issue
             return key !== "date";
         }));
@@ -444,7 +450,7 @@
             .append('text')
             .attr("class", "hover-text")
             .attr("y", height - (height - 40)) // hover date text position
-            .attr("x", width - 170) // hover date text position
+            .attr("x", width - 250) // hover date text position
             .style("fill", "#E6E7E8");
 
         var columnNames = d3.keys(data[0]) //grab the key values from your first data row
@@ -480,7 +486,7 @@
             //var graph_y = yScale.invert(mouse_y);
             //console.log(graph_x);
 
-            var format = d3.time.format('%x'); // Format hover date text to show three letter month and full year
+            var format = d3.time.format('%Y-%m-%d %H:%M'); // Format hover date text to show three letter month and full year
 
             hoverDate.text(format(graph_x)); // scale mouse position to xScale date and format it to show month and year
 
